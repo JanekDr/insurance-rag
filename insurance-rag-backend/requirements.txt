@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+pydantic-settings
+openai
+qdrant-client
+pymupdf
+langchain-text-splitters
+python-dotenv
