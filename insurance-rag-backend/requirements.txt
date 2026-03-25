@@ -7,3 +7,4 @@ qdrant-client
 pymupdf
 langchain-text-splitters
 python-dotenv
+tiktoken
