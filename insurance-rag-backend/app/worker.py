@@ -18,7 +18,7 @@ celery_app = Celery(
 
 
 @celery_app.task(bind=True, max_retries=3)
-def process_pdf_task(self, file_path: str, filename: str):
+def process_pdf_task(self, file_path: str, filename: str, document_id: str):
     try:
         vector_db = VectorDBService()
         pdf_service = PDFService(chunk_size_tokens=400, chunk_overlap_tokens=50)
@@ -26,8 +26,8 @@ def process_pdf_task(self, file_path: str, filename: str):
         with open(file_path, "rb") as f:
             file_bytes = f.read()
 
-        chunks = pdf_service.process_pdf_bytes(file_bytes, filename=filename)
-        vector_db.insert_chunks(chunks)
+        chunks = pdf_service.process_pdf_bytes(file_bytes, filename=filename, document_id=document_id)
+        vector_db.insert_chunks(chunks, document_id)
 
     except Exception as e:
         self.retry(countdown=60, exc=e)

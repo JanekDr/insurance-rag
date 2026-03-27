@@ -18,7 +18,7 @@ if not logger.handlers:
 
 
 class VectorDBService:
-    def __init__(self, collection_name: str = "insurance_docs_v1"):
+    def __init__(self, collection_name: str = "insurance_docs_v2"):
         self.collection_name = collection_name
 
         qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
@@ -79,7 +79,7 @@ class VectorDBService:
             logger.error(f"Gemini vectorization error: {e}")
             raise RuntimeError("Cannot connect with gemini api.")
 
-    def insert_chunks(self, chunks: List[DocumentChunk]):
+    def insert_chunks(self, chunks: List[DocumentChunk], document_id: str):
         if not chunks:
             return
 
@@ -93,6 +93,7 @@ class VectorDBService:
                 id=point_id,
                 vector=embedding,
                 payload={
+                    "document_id": document_id,
                     "text": chunk.text,
                     "page_number": chunk.metadata.page_number,
                     "source_filename": chunk.metadata.source_filename
@@ -105,12 +106,24 @@ class VectorDBService:
             points=points
         )
 
-    def search(self, query_text: str, limit: int = 5) -> List[dict]:
+    def search(self, query_text: str, document_id: str = None, limit: int = 5) -> List[dict]:
         query_vector = self._get_embeddings([query_text])[0]
+
+        query_filter = None
+        if document_id:
+            query_filter = qdrant_models.Filter(
+                must=[
+                    qdrant_models.FieldCondition(
+                        key="document_id",
+                        match=qdrant_models.MatchValue(value=document_id)
+                    )
+                ]
+            )
 
         search_result = self.qdrant.query_points(
             collection_name=self.collection_name,
             query=query_vector,
+            query_filter=query_filter,
             limit=limit
         )
 

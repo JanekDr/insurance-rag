@@ -1,5 +1,6 @@
 import logging
 import tempfile
+import uuid
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 
@@ -24,12 +25,14 @@ async def upload_file(file: UploadFile = File(...)):
             tmp.write(file_bytes)
             tmp_file_path = tmp.name
 
-        task = process_pdf_task.delay(tmp_file_path, file.filename)
+        document_id = str(uuid.uuid4())
+        task = process_pdf_task.delay(tmp_file_path, file.filename, document_id)
 
         return {
             "message": "Plik został przyjęty do kolejki wektoryzacji.",
             "filename": file.filename,
             "task_id": task.id,
+            "document_id": document_id,
             "status": "queued"
         }
 
