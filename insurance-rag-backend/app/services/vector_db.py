@@ -8,6 +8,7 @@ from qdrant_client.http import models as qdrant_models
 from app.models.pdf import DocumentChunk
 from google import genai
 from google.genai import types
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -51,32 +52,39 @@ class VectorDBService:
                 )
             )
 
+    @retry(
+        wait=wait_exponential(multiplier=2, min=4, max=60),
+        stop=stop_after_attempt(6),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Limit API osiągnięty. Ponowna próba za {retry_state.next_action.sleep}s..."
+        )
+    )
+    def _call_gemini_api(self, batch: List[str]):
+        return self.genai_client.models.embed_content(
+            model='gemini-embedding-001',
+            contents=batch,
+            config=types.EmbedContentConfig(
+                task_type="RETRIEVAL_DOCUMENT",
+                output_dimensionality=768
+            )
+        )
+
     def _get_embeddings(self, texts: List[str]) -> List[List[float]]:
-        BATCH_SIZE = 15
+        BATCH_SIZE = 25
         all_embeddings = []
 
         try:
             for i in range(0, len(texts), BATCH_SIZE):
-                batch = texts[i:i+BATCH_SIZE]
+                batch = texts[i:i + BATCH_SIZE]
 
-                response = self.genai_client.models.embed_content(
-                    model='gemini-embedding-001',
-                    contents=batch,
-                    config=types.EmbedContentConfig(
-                        task_type="RETRIEVAL_DOCUMENT",
-                        output_dimensionality=768
-                    )
-                )
+                response = self._call_gemini_api(batch)
 
                 all_embeddings.extend([emb.values for emb in response.embeddings])
-
-                if i+BATCH_SIZE < len(texts):
-                    time.sleep(15)
 
             return all_embeddings
 
         except Exception as e:
-            logger.error(f"Gemini vectorization error: {e}")
+            logger.error(f"Gemini vectorization error po wszystkich próbach: {e}")
             raise RuntimeError("Cannot connect with gemini api.")
 
     def insert_chunks(self, chunks: List[DocumentChunk], document_id: str):
