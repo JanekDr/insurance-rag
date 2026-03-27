@@ -70,7 +70,7 @@ class VectorDBService:
         )
 
     def _get_embeddings(self, texts: List[str]) -> List[List[float]]:
-        BATCH_SIZE = 25
+        BATCH_SIZE = 60
         all_embeddings = []
 
         try:
