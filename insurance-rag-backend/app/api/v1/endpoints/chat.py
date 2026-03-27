@@ -14,7 +14,7 @@ llm_service = LLMService(vector_db=vector_db)
 @router.post("/", response_model=RAGResponse)
 async def chat_endpoint(request: ChatRequest):
     try:
-        response = llm_service.ask_question(request.question)
+        response = llm_service.ask_question(request.question, request.document_id)
         return response
 
     except RuntimeError as e:

@@ -19,8 +19,12 @@ class LLMService:
         self.genai_client = genai.Client(api_key=gemini_key)
         self.model_name = 'gemini-2.5-flash'
 
-    def ask_question(self, question: str) -> RAGResponse:
-        contexts = self.vector_db.search(query_text=question, limit=5)
+    def ask_question(self, question: str, document_id:str) -> RAGResponse:
+        contexts = self.vector_db.search(
+            query_text=question,
+            document_id=document_id,
+            limit=5
+        )
 
         if not contexts:
             contexts = []
