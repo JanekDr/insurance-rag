@@ -8,3 +8,8 @@ pymupdf
 langchain-text-splitters
 python-dotenv
 tiktoken
+sentence-transformers
+google-genai
+celery
+redis
+tenacity
