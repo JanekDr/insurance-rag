@@ -19,10 +19,11 @@ class LLMService:
         self.genai_client = genai.Client(api_key=gemini_key)
         self.model_name = 'gemini-2.5-flash'
 
-    def ask_question(self, question: str, document_id:str) -> RAGResponse:
+    def ask_question(self, question: str, document_id:str, model_type: str) -> RAGResponse:
         contexts = self.vector_db.search(
             query_text=question,
             document_id=document_id,
+            model_type=model_type,
             limit=5
         )
 

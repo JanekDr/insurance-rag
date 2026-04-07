@@ -5,6 +5,7 @@ from typing import List
 class ChatRequest(BaseModel):
     question: str
     document_id: str
+    model_type: str = "gemini"
 
 
 class SourceCitation(BaseModel):
